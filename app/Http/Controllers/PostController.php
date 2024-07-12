@@ -4,12 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Services\ElasticsearchService;
 
 class PostController extends Controller
 {
+    protected $elasticsearchService;
+    public function __construct(ElasticsearchService $elasticsearchService)
+    {
+        $this->elasticsearchService = $elasticsearchService;
+    }
     public function index()
     {
-        $posts = Post::all();
+        $params = [
+            'index' => 'posts',
+            'body' => [
+                'query' => [
+                    'match_all' => (object) []
+                ]
+            ]
+        ];
+
+        $posts = $this->elasticsearchService->search($params);
         return view('posts.index', compact('posts'));
     }
 
@@ -20,12 +35,18 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required',
-            'body' => 'required',
-        ]);
+        // Store post in the database
+        $post = Post::create($request->all());
 
-        Post::create($request->all());
+        // Index post in Elasticsearch
+        $params = [
+            'index' => 'posts',
+            'id' => $post->id,
+            'body' => $post->toArray()
+        ];
+
+        $this->elasticsearchService->index($params);
+
         return redirect()->route('posts.index');
     }
 
