@@ -1,5 +1,7 @@
 <?php
 
+use Elastic\Elasticsearch\Response\Elasticsearch;
+
 return [
 
     /*

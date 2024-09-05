@@ -13,16 +13,16 @@ class ElasticsearchService
     {
 
         $this->client = ClientBuilder::create()
-            ->setHosts([config('elasticsearch.hosts')])
+            ->setHosts(['http://localhost:9200'])
             ->build();
     }
 
-    public function search($index, $type, $body)
+    public function search($params)
     {
         return $this->client->search([
-            'index' => $index,
-            'type' => $type,
-            'body' => $body
+            'index' => $params['index'],
+            'type' => $params['type'],
+            'body' => $params['body']
         ]);
     }
 

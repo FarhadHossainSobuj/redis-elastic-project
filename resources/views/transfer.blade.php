@@ -8,13 +8,11 @@
                 <div class="card-header">{{ __('Dashboard') }}</div>
 
                 <div class="card-body">
-                    @if (session('status'))
-                    <div class="alert alert-success" role="alert">
-                        {{ session('status') }}
-                    </div>
-                    @endif
-
-                    {{ __('You are logged in!') }}
+                    <form action="{{ route('tranfer-store') }}" method="post">
+                        @csrf
+                        <input type="number" name="amount" placeholder="Place amount">
+                        <button class="btn btn-info">Submit</button>
+                    </form>
                 </div>
             </div>
         </div>

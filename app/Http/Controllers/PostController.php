@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Services\ElasticsearchService;
+use Elastic\Elasticsearch\ClientBuilder;
+use Elasticsearch;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class PostController extends Controller
 {
@@ -15,16 +19,57 @@ class PostController extends Controller
     }
     public function index()
     {
-        $params = [
-            'index' => 'posts',
-            'body' => [
-                'query' => [
-                    'match_all' => (object) []
-                ]
-            ]
-        ];
+        // $client = ClientBuilder::create()->build();
+        // $params = ['index' => 'my_index'];
+        // $response = $client->search($params);
+        // print_r($response->asArray());
+        // return 'ok';
 
-        $posts = $this->elasticsearchService->search($params);
+        // $data = [
+        //     'body' => [
+        //         'testField' => 'abc'
+        //     ],
+        //     'index' => 'my_index',
+        //     'type' => 'my_type',
+        //     'id' => 'my_id',
+        // ];
+        // $params = [
+        //     'index' => 'my_index',
+        //     'id'    => 'my_id',
+        //     'body'  => ['testField' => 'abc']
+        // ];
+
+
+
+        // $client = ClientBuilder::create()->build();
+
+        // $response = $client->index($params);
+        // dd($response->asArray());
+
+
+        // $res = $client->index($data);
+
+        // // $stats = $client->indices()->stats(['index' => 'my_index']);
+        // $stats = $client->info();
+        // dd((string) $stats->getBody());
+
+
+
+        // $params = [
+        //     'index' => 'posts',
+        //     'type' => 'text',
+        //     'body' => [
+        //         'query' => [
+        //             'match_all' => (object) []
+        //         ]
+        //     ]
+        // ];
+
+        // $posts = $this->elasticsearchService->search($params);
+        // dd($posts);
+
+        $posts = Post::all();
+        // dd($posts);
         return view('posts.index', compact('posts'));
     }
 
@@ -37,6 +82,7 @@ class PostController extends Controller
     {
         // Store post in the database
         $post = Post::create($request->all());
+        Redis::set("post_{$post->id}", $post, 60);
 
         // Index post in Elasticsearch
         $params = [
@@ -45,9 +91,20 @@ class PostController extends Controller
             'body' => $post->toArray()
         ];
 
-        $this->elasticsearchService->index($params);
+        $response = $this->elasticsearchService->index($params);
+        // dd($response);
+
 
         return redirect()->route('posts.index');
+    }
+
+    public function search(Request $request)
+    {
+        // dd($request->all());
+        $query = $request->input('query');
+        $posts = json_decode(Post::search2($query));
+        // dd($posts);
+        return view('posts.index', compact('posts'));
     }
 
     public function show(Post $post)
