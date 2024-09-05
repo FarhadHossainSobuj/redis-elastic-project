@@ -102,6 +102,9 @@ class PostController extends Controller
     {
         // dd($request->all());
         $query = $request->input('query');
+        if (empty($query)) {
+            return redirect()->back();
+        }
         $posts = json_decode(Post::search2($query));
         // dd($posts);
         return view('posts.index', compact('posts'));
